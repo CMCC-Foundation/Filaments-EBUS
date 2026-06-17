@@ -13,6 +13,7 @@ from dask.distributed import Client
 
 
 if __name__ == '__main__':
+    print('### Off-shelf content timeseries computation ###')
 
     client = Client()
     print(client.dashboard_link)
@@ -20,23 +21,26 @@ if __name__ == '__main__':
     print('Reading regions')
     regions = read_region_input_files('regions.input')
 
-    if not os.path.exists('outputs/off_shelf_timeseries/'):
-        print('off_shelf_timeseries folder is missing. Creating it.')
-        os.makedirs('outputs/off_shelf_timeseries/')
+    if not os.path.exists('outputs/off_shelf_content_timeseries/'):
+        print('off_shelf_content_timeseries folder is missing. Creating it.')
+        os.makedirs('outputs/off_shelf_content_timeseries/')
 
     # Read global configurations (number of clusters etc)
-    cfg = OmegaConf.load('configs/glob_config.yaml')
+    cfg = OmegaConf.load('../glob_config.yaml')
 
     boxes = [box for boxes in regions.values() for box in boxes] 
 
     for i, box in enumerate(boxes):
         i += 1
 
-        if not os.path.exists(f'outputs/off_shelf_timeseries/box_{i}.nc'):
-            content = xr.open_dataarray(f'outputs/off_shelf_content/box_{i}.nc').chunk({'time' : 1})
+        if not os.path.exists(f'outputs/off_shelf_content_timeseries/box_{i}.nc'):
+            print(f'Processing box {i}...')
+            content = xr.open_dataarray(f'outputs/off_shelf_content_map/box_{i}.nc').chunk({'time' : 1})
 
             time_series = content.sum(dim=['longitude', 'latitude'])
 
-            time_series.to_netcdf(f'outputs/off_shelf_timeseries/box_{i}.nc')
+            time_series.to_netcdf(f'outputs/off_shelf_content_timeseries/box_{i}.nc')
+        else:
+            print(f'Box {i} already exists. Skipping.')
 
     client.close()

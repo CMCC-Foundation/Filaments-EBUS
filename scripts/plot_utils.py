@@ -164,7 +164,7 @@ def plot_clustered_space(train_data, labels, pipeline, axs, fontsize = 13):
     # UPPER CHL KERNEL PLOT
     axs["A"].set_xticks([])
     axs["A"].set_xlim(xmin=-xabs_max, xmax=xabs_max)
-    axs["A"].hist(train_data["chl"], alpha = .5, density = True, bins = 20, color = 'grey')
+    axs["A"].hist(train_data["chl"], alpha = .5,  bins = 20, color = 'grey')
     axs["A"].vlines(0, ymin = 0, ymax = max(axs["A"].get_ylim(), key=abs), 
                     color = "dimgray", linestyle = "dashed", linewidth = .5)
     
@@ -173,7 +173,7 @@ def plot_clustered_space(train_data, labels, pipeline, axs, fontsize = 13):
     axs["C"].set_yticks([])
     axs["C"].set_ylim(ymin=-yabs_max, ymax=yabs_max)
     #axs["C"].plot(sst_kde(sst_x), sst_x, color = "black")
-    axs["C"].hist(train_data["sst"], alpha = .5, density = True, bins = 20, orientation = "horizontal", color = 'grey')
+    axs["C"].hist(train_data["sst"], alpha = .5, bins = 20, orientation = "horizontal", color = 'grey')
     axs["C"].hlines(0, xmin = 0, xmax = max(axs["C"].get_xlim(), key=abs), 
                     color = "dimgray", linestyle = "dashed", linewidth = .5)
     

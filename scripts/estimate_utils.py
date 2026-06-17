@@ -43,7 +43,14 @@ def compute_transport(timeseries, period = 'year', weighted = False, pct_avails 
 
     maxs, mins = compute_maxmins_pairs(timeseries, weighted = weighted, pct_avails = pct_avails)
 
-    return (maxs - mins).groupby(f'time.{period}').sum()
+    transport = (maxs - mins).groupby(f'time.{period}').sum()
+
+    # if a year is missing, we need to add it with a value of 0
+    if period == 'year':
+        all_years = np.arange(timeseries.time.dt.year.min(), timeseries.time.dt.year.max() + 1)
+        transport = transport.reindex(year = all_years, fill_value = 0)
+
+    return transport
 
 def load_carbon_data(path):
     return  xr.open_dataarray(path) * 50
