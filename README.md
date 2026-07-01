@@ -1,3 +1,5 @@
+# Filaments-EBUS
+
 Code used for the data analysis and figures of the paper "A satellite-based estimate of the contribution of filamentary structures to lateral carbon transport in the Pacific and Atlantic Upwelling systems".
 
 ![big_california_example](https://github.com/user-attachments/assets/d3195d68-3d65-46c9-9091-4f35384650bc)
@@ -14,14 +16,16 @@ This directory contains the scripts, configs, notebooks, and outputs used to rep
 
 ## Set up an experiment folder
 
-Create one folder per experiment and place the configuration files there. The scripts expect to run from inside that folder.
+Create one folder per experiment and place the configuration files there. The scripts expect to run from inside that folder. 
+
+```
 
 ### `glob_config.yaml`
 
 Use a configuration file similar to the one below:
 
 ```yaml
-data_path: '/path/to/your/data/pacific'
+data_path: '/path/to/your/data/pacific' 
 ref_depth: -1000
 c_to_chl_ratio: 50
 n_clusters: 4
@@ -32,7 +36,7 @@ time_period:
 
 ### `regions.input`
 
-Define the regional boxes in a `regions.input` file, for example:
+Define the regional boxes in a `regions.input` file. It is structured as a dictionary with the dynamical region name (e.g. California Current system) and a list of tuples defining the boxes limits. The coordinates inside the tuples have to be specified as `(lon_min, lon_max, lat_min, lat_max)`. For example:
 
 ```python
 {
@@ -49,6 +53,26 @@ Define the regional boxes in a `regions.input` file, for example:
                                 (-81, -71, -41, -31),
                                 (-82, -72, -51, -41)],
 }
+```
+
+### Satellite data structure
+
+`data_path` folder should be structured as follows:
+
+```
+data_folder/
+    chl/
+        box_1.nc
+        ...
+    eudepth/
+        box_1.nc
+        ...
+    sst/
+        box_1.nc
+        ...
+    bathymetry/
+        box_1.nc
+        ...
 ```
 
 ## Processing workflow
@@ -72,6 +96,42 @@ python compute_shelf_content_timeseries.py
 ```
 
 `compute_off_shelf_content_map.py` and `compute_shelf_content_map.py` create the gridded content maps, while the corresponding `*_timeseries.py` scripts integrate them over longitude and latitude.
+
+## Resulting folder structure 
+
+The resulting folder structure after running the scripts should be as follows
+
+```
+project/
+    outputs/
+        train_data/ # Csv data used for fitting clustering
+            California Current System.csv
+            ...
+                train_data/
+        models/ # K-means clustering fitted model
+            California Current System.joblib
+            ...
+        labels/ # .npy labels of each entry inside training data
+            California Current System.npy
+        filament_masks/ # (n_time, lon, lat) time series of binary filament masks
+            box_1.nc
+            ...
+        filament_content_timeseries/ # (n_time,) time series of daily filament content
+            box_1.nc
+            ...
+        off_shelf_content_map/ # (n_time, lon, lat) time series of off-shelf carbon content
+            box_1.nc
+            ...
+        off_shelf_content_timeseries/ # (n_time,) time series of daily off-shelf content (integrated over lon, lat)
+            box_1.nc
+            ...
+        oshelf_content_map/ # (n_time, lon, lat) time series of in-shelf carbon content
+            box_1.nc
+            ...
+        shelf_content_timeseries/ # (n_time,) time series of in-shelf carbon content (integrated over lon, lat)
+            box_1.nc
+            ...
+
 
 ## Transport estimates
 
