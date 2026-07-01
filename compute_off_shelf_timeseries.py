@@ -26,7 +26,7 @@ if __name__ == '__main__':
         os.makedirs('outputs/off_shelf_content_timeseries/')
 
     # Read global configurations (number of clusters etc)
-    cfg = OmegaConf.load('../glob_config.yaml')
+    cfg = OmegaConf.load('glob_config.yaml')
 
     boxes = [box for boxes in regions.values() for box in boxes] 
 

@@ -15,6 +15,10 @@ from tqdm import tqdm
 from omegaconf import OmegaConf
 from dask.distributed import Client
 
+"""
+Run clustering on the training dataset for each region and save the fitted model and labels to disk.
+"""
+
 def fit_clustering(train_data, n_clusters = 4):
 
     """Fits a StandardScaler and a K-means clustering to the train dataset in input.
@@ -38,8 +42,11 @@ if __name__ == '__main__':
     print('Reading regions')
     regions = read_region_input_files('regions.input')
 
+    print(f'Found regions: {regions.keys()}')
+
     # Read global configurations (number of clusters etc)
-    cfg = OmegaConf.load('../glob_config.yaml')
+    cfg = OmegaConf.load('glob_config.yaml')
+    print(f'Configuration loaded from glob_config.yaml: {cfg}')
 
     # The train_data folder is created in case it is not existing
     if not os.path.exists('outputs/models/'):

@@ -11,10 +11,15 @@ def read_region_input_files(path):
         data = file.read()
     return ast.literal_eval(data)
 
-def _open_time_series(path):
-    return xr.open_zarr(path, chunks={'longitude': -1, 'latitude': -1})
-
-def _compute_off_shelf_anomalies(data, bathy, ref_depth):
+def open_time_series(path):
+    if path[-3:] == '.nc':
+        return xr.open_dataset(path)   
+    elif path[-3:] == '.zarr':
+        return xr.open_zarr(path, chunks={'longitude': -1, 'latitude': -1})
+    else:
+        raise ValueError(f"Unsupported file format for path: {path}. Supported formats are .nc and .zarr")
+    
+def compute_off_shelf_anomalies(data, bathy, ref_depth):
     data = data.where(bathy < ref_depth)
     num_years = len(data.time) // 365
     data = data.assign_coords({'dayofyear': ('time', np.tile(np.arange(0, 365), num_years))})
@@ -23,7 +28,7 @@ def _compute_off_shelf_anomalies(data, bathy, ref_depth):
     delta_data = data.groupby('dayofyear') - data_clima
     return delta_data.drop('dayofyear')
 
-def _create_time_mask(start_date, end_date):
+def create_time_mask(start_date, end_date):
     time_series = pd.date_range(start_date, end_date, freq='1D')
     return time_series[~((time_series.day == 29) & (time_series.month == 2))]
 
@@ -57,16 +62,16 @@ def prepare_delta_timeseries(box, chl_path, sst_path, bathy_path, ref_depth):
     # Define the geographic slice
     lons, lats = slice(box[0], box[1]), slice(box[2], box[3])
     
-    # Load and slice chlorophyll and SST datasets
-    chl = _open_time_series(chl_path).sel(longitude=lons, latitude=lats).persist()
-    sst = _open_time_series(sst_path).sel(longitude=lons, latitude=lats).persist()
+    # Load and slice chlorophyll and SST datasets)
+    chl = open_time_series(chl_path).sel(longitude=lons, latitude=lats).persist()
+    sst = open_time_series(sst_path).sel(longitude=lons, latitude=lats).persist()
     
     # Load bathymetry data
     bathy = xr.open_dataarray(bathy_path).sel(longitude=lons, latitude=lats).persist()
 
     # Compute anomalies based on bathymetry
-    delta_chl = _compute_off_shelf_anomalies(chl, bathy, ref_depth)
-    delta_sst = _compute_off_shelf_anomalies(sst, bathy, ref_depth)
+    delta_chl = compute_off_shelf_anomalies(chl, bathy, ref_depth)
+    delta_sst = compute_off_shelf_anomalies(sst, bathy, ref_depth)
 
     return delta_chl, delta_sst
 
@@ -74,7 +79,7 @@ def prepare_training_data(box, chl_path, sst_path, bathy_path, ref_depth, start_
     
     delta_chl, delta_sst = prepare_delta_timeseries(box, chl_path, sst_path, bathy_path, ref_depth)
     
-    mask = _create_time_mask(start_date, end_date)
+    mask = create_time_mask(start_date, end_date)
 
     delta_chl = delta_chl.chl.sel(time=mask)
     delta_sst = delta_sst.sst.sel(time=mask)
@@ -107,10 +112,10 @@ def compute_deltachl(box, chl_path, bathy_path, ref_depth):
     # Load bathymetry data
     bathy = xr.open_dataarray(bathy_path).sel(longitude=lons, latitude=lats)
 
-    chl = _open_time_series(chl_path).sel(longitude=lons, latitude=lats)
+    chl = open_time_series(chl_path).sel(longitude=lons, latitude=lats)
 
     # Compute anomalies based on bathymetry
-    delta_chl = _compute_off_shelf_anomalies(chl, bathy, ref_depth)
+    delta_chl = compute_off_shelf_anomalies(chl, bathy, ref_depth)
 
     return delta_chl
 

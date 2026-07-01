@@ -24,7 +24,7 @@ if __name__ == '__main__':
         os.makedirs('outputs/filament_content_timeseries/')
 
     # Read global configurations (number of clusters etc)
-    cfg = OmegaConf.load('../glob_config.yaml')
+    cfg = OmegaConf.load('glob_config.yaml')
     print(cfg)
 
     boxes = [box for boxes in regions.values() for box in boxes] 
@@ -36,8 +36,11 @@ if __name__ == '__main__':
 
             masks = xr.open_dataarray(f'outputs/filament_masks/box_{i}.nc').chunk({'time' : 1})
 
-            chl = crop_region(cfg.chl_path, box) * masks
-            eudepth = crop_region(cfg.eudepth_path, box) * masks
+            chl_path = os.path.join(cfg.data_path, 'chl', f'box_{i}.nc')
+            eudepth_path = os.path.join(cfg.data_path, 'eudepth', f'box_{i}.nc')
+
+            chl = xr.open_dataarray(chl_path) * masks
+            eudepth = xr.open_dataarray(eudepth_path) * masks
 
             biomass_content = chl * eudepth 
             time_series = biomass_content.sum(dim=['longitude', 'latitude']) * (4000)**2 * 1e-15

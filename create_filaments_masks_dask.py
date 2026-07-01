@@ -9,7 +9,7 @@ from scripts.clustering_utils import create_labels_map
 import os
 import joblib
 from omegaconf import OmegaConf
-from scripts.preprocessing import read_region_input_files, _compute_off_shelf_anomalies
+from scripts.preprocessing import read_region_input_files, compute_off_shelf_anomalies, prepare_delta_timeseries
 from scripts.clustering_utils import find_filament_cluster
 from tqdm import tqdm
 
@@ -77,42 +77,38 @@ def generate_binary_masks_in_parallel(deltas, model, streamers_cluster):
 
 
 
-def prepare_delta_timeseries(box, chl_path, sst_path, bathy_path, ref_depth):
-    """
-    Prepares delta time series for chlorophyll and SST data, ensuring parallel processing
-    by persisting both datasets immediately after loading.
+# def prepare_delta_timeseries(box, chl_path, sst_path, bathy_path, ref_depth):
+#     """
+#     Prepares delta time series for chlorophyll and SST data, ensuring parallel processing
+#     by persisting both datasets immediately after loading.
     
-    Input:
-        box (tuple): Bounding box coordinates (lon_min, lon_max, lat_min, lat_max)
-        chl_path (str): Path to the chlorophyll time series
-        sst_path (str): Path to the SST time series
-        bathy_path (str): Path to the bathymetry data
-        ref_depth (float): Reference depth for off-shelf anomaly computation
+#     Input:
+#         box (tuple): Bounding box coordinates (lon_min, lon_max, lat_min, lat_max)
+#         chl_path (str): Path to the chlorophyll time series
+#         sst_path (str): Path to the SST time series
+#         bathy_path (str): Path to the bathymetry data
+#         ref_depth (float): Reference depth for off-shelf anomaly computation
         
-    Output:
-        delta_chl (xarray.DataArray): Anomaly data for chlorophyll
-        delta_sst (xarray.DataArray): Anomaly data for SST
-    """
+#     Output:
+#         delta_chl (xarray.DataArray): Anomaly data for chlorophyll
+#         delta_sst (xarray.DataArray): Anomaly data for SST
+#     """
     
-    # Define the geographic slice
-    lons, lats = slice(box[0], box[1]), slice(box[2], box[3])
+#     # Define the geographic slice
+#     lons, lats = slice(box[0], box[1]), slice(box[2], box[3])
     
-    # Load and slice chlorophyll and SST datasets
-    chl = _open_time_series(chl_path).sel(longitude=lons, latitude=lats).persist()
-    sst = _open_time_series(sst_path).sel(longitude=lons, latitude=lats).persist()
+#     # Load and slice chlorophyll and SST datasets
+#     chl = _open_time_series(chl_path).sel(longitude=lons, latitude=lats).persist()
+#     sst = _open_time_series(sst_path).sel(longitude=lons, latitude=lats).persist()
 
-    # Load bathymetry data
-    bathy = xr.open_dataarray(bathy_path).sel(longitude=lons, latitude=lats).persist()
+#     # Load bathymetry data
+#     bathy = xr.open_dataarray(bathy_path).sel(longitude=lons, latitude=lats).persist()
 
-    # Compute anomalies based on bathymetry
-    delta_chl = _compute_off_shelf_anomalies(chl, bathy, ref_depth)
-    delta_sst = _compute_off_shelf_anomalies(sst, bathy, ref_depth)
+#     # Compute anomalies based on bathymetry
+#     delta_chl = _compute_off_shelf_anomalies(chl, bathy, ref_depth)
+#     delta_sst = _compute_off_shelf_anomalies(sst, bathy, ref_depth)
 
-    return delta_chl, delta_sst
-
-def _open_time_series(path):
-    return xr.open_zarr(path, chunks={'longitude': -1, 'latitude': -1})
-
+#     return delta_chl, delta_sst
 
 if __name__ == '__main__':
 
@@ -149,7 +145,12 @@ if __name__ == '__main__':
         for box in tqdm(boxes):
             box_code += 1
 
-            delta_chl, delta_sst = prepare_delta_timeseries(box, cfg.chl_path, cfg.sst_path, cfg.bathy_path, cfg.ref_depth)
+            chl_path = os.path.join(cfg.data_path, 'chl', f'box_{box_code}.nc')
+            sst_path = os.path.join(cfg.data_path, 'sst', f'box_{box_code}.nc')
+            bathy_path = os.path.join(cfg.data_path, 'bathymetry', f'box_{box_code}.nc')
+
+            delta_chl, delta_sst = prepare_delta_timeseries(box, chl_path, sst_path,  bathy_path, cfg.ref_depth)
+            #delta_chl, delta_sst = prepare_delta_timeseries(box, cfg.chl_path, cfg.sst_path, cfg.bathy_path, cfg.ref_depth)
         
             deltas = xr.merge([delta_chl, delta_sst]).persist()
             
