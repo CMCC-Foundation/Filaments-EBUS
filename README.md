@@ -14,18 +14,18 @@ This directory contains the scripts, configs, notebooks, and outputs used to rep
 4. compute filament, shelf, and offshore carbon content
 5. assemble the transport estimates and paper figures
 
+
 ## Set up an experiment folder
 
 Create one folder per experiment and place the configuration files there. The scripts expect to run from inside that folder. 
 
-```
 
 ### `glob_config.yaml`
 
 Use a configuration file similar to the one below:
 
 ```yaml
-data_path: '/path/to/your/data/pacific' 
+data_path: '/path/to/your/data/' 
 ref_depth: -1000
 c_to_chl_ratio: 50
 n_clusters: 4
@@ -33,6 +33,8 @@ time_period:
   start: '2003-01-01'
   end: '2012-12-31'
 ```
+
+See below for expected data structure.
 
 ### `regions.input`
 
@@ -55,7 +57,7 @@ Define the regional boxes in a `regions.input` file. It is structured as a dicti
 }
 ```
 
-### Satellite data structure
+### Data structure
 
 `data_path` folder should be structured as follows:
 
@@ -131,7 +133,7 @@ project/
         shelf_content_timeseries/ # (n_time,) time series of in-shelf carbon content (integrated over lon, lat)
             box_1.nc
             ...
-
+```
 
 ## Transport estimates
 
